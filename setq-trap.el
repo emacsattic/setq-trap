@@ -8,7 +8,7 @@
 ;;; Status: unreleased, not yet usable in emacs 18
 ;;; Created: 1994-08-18
 
-;;; $Id: setq-trap.el,v 1.1 1994/08/28 22:10:50 friedman Exp $
+;;; $Id: setq-trap.el,v 1.2 2013/07/02 19:02:53 friedman Exp $
 
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with this program; if not, you can either send email to this
-;;; program's maintainer or write to: The Free Software Foundation,
-;;; Inc.; 675 Massachusetts Avenue; Cambridge, MA 02139, USA.
+;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -33,7 +31,7 @@
 ;;; would still use the setq bytecode and bypass any redefinition in lisp.
 ;;; Anyway, isn't debugging byte-compiled code inherently more difficult?
 
-;;; TODO: 
+;;; TODO:
 ;;;   * Right now this only invokes the debugger if the value list for a
 ;;;     symbol is empty or when the value you tried to set it to is in the
 ;;;     value list.  There should be a way to specify an exclusive list of
@@ -57,20 +55,20 @@
         (sym   (make-symbol "sym"))
         (val   (make-symbol "val"))
         (subr  (get 'setq 'subr-definition)))
-    (` (let (((, args1) '(, args))
-             (, sym)
-             (, val))
-         (while (, args1)
-           ((, subr) (, sym) (car (, args1)))
-           ((, subr) (, val) (eval (car (cdr (, args1)))))
-           ((, subr) (, args1) (cdr (cdr (, args1))))
-           
-           (and (setq-trap-p (, sym) (, val))
-                (funcall debugger nil 
-                         (format "attempt to set `%s' to: %s"
-                                 (, sym) (, val))))
-           (set (, sym) (, val)))
-         (, val)))))
+    `(let ((,args1 ',args)
+           ,sym
+           ,val)
+       (while ,args1
+         (,subr ,sym (car ,args1))
+         (,subr ,val (eval (car (cdr ,args1))))
+         (,subr ,args1 (cdr (cdr ,args1)))
+
+         (and (setq-trap-p ,sym ,val)
+              (funcall debugger nil
+                       (format "attempt to set `%s' to: %s"
+                               ,sym ,val)))
+         (set ,sym ,val))
+       ,val)))
 
 ;; TODO: tests --- delete this when finished
 ;(setq setq-trap-debug-alist nil)
@@ -111,7 +109,7 @@
   (let ((entry (assq sym setq-trap-debug-alist)))
     (cond
      ((null values)
-      (setq setq-trap-debug-alist 
+      (setq setq-trap-debug-alist
             (delq entry setq-trap-debug-alist)))
      (t
       (while values
